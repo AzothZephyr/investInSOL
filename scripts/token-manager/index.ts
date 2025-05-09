@@ -27,7 +27,7 @@ yargs(hideBin(process.argv))
     }
   )
   .command(
-    'create-collection <programId> <zHausMint> <zBondMint>',
+    'create-collection <programId>',
     'Create the Option collection for ZephyrHaus (zOption)',
     (yargs: Argv) => {
       return yargs
@@ -40,8 +40,6 @@ yargs(hideBin(process.argv))
     async (argv: ArgumentsCamelCase<{ programId: string; }>) => {
       console.log('Executing create collection command...');
       console.log(`   Program ID: ${argv.programId}`);
-      console.log(`   zHAUS Mint: ${argv.zHausMint}`);
-      console.log(`   zBOND Mint: ${argv.zBondMint}`);
       try {
         const programIdPubKey = new PublicKey(argv.programId);
         await createCollection(programIdPubKey);
