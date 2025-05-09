@@ -2,17 +2,8 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program, Wallet } from "@coral-xyz/anchor";
 import { InvestInSol } from "../target/types/invest_in_sol";
 import { assert, expect } from "chai";
-import {
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
-} from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAccount,
-} from "@solana/spl-token";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { getAccount } from "@solana/spl-token";
 import {
   CN_MINT_ADDRESS,
   PT_MINT_ADDRESS,
@@ -21,11 +12,10 @@ import {
   parseAnchorError,
   requestAirdrop,
   updateLocks,
-  sendAndConfirmTransaction,
   deposit,
 } from "./utils";
 
-describe.only("deposit instruction (with hardcoded mints)", () => {
+describe("deposit instruction (with hardcoded mints)", () => {
   const provider = anchor.AnchorProvider.local();
   anchor.setProvider(provider);
 
@@ -67,17 +57,12 @@ describe.only("deposit instruction (with hardcoded mints)", () => {
     configPda = initResult.configPda;
     treasuryPda = initResult.treasuryPda;
 
-    // derive protocol's PT ATA address (needs configPda)
-    protocolPtAta = await anchor.utils.token.associatedAddress({
-      mint: ptMint,
-      owner: configPda,
-    });
     console.log(`config PDA: ${configPda.toBase58()}`);
     console.log(`treasury PDA: ${treasuryPda.toBase58()}`);
-    console.log(`protocol PT ATA: ${protocolPtAta.toBase58()}`);
   });
 
-  it("allows deposit when protocol is unlocked & verifies state changes", async () => {
+  it.only("allows deposit when protocol is unlocked & verifies state changes", async () => {
+    console.log("updating locks with config PDA...", configPda);
     await updateLocks(
       program,
       provider,
@@ -88,12 +73,6 @@ describe.only("deposit instruction (with hardcoded mints)", () => {
       false // set converts unlocked
     );
     const depositAmount = new anchor.BN(1 * LAMPORTS_PER_SOL); // 1 SOL
-
-    // derive ATAs needed for this specific deposit
-    const depositorCnAta = await anchor.utils.token.associatedAddress({
-      mint: cnMint,
-      owner: depositor.publicKey,
-    });
 
     // get initial states
     const initialTreasuryBalance = await provider.connection.getBalance(
@@ -115,7 +94,15 @@ describe.only("deposit instruction (with hardcoded mints)", () => {
 
     console.log("attempting deposit...");
     // execute deposit
-    await deposit(program, provider, depositor, cnMint, ptMint, depositAmount);
+    const { depositorCnAta } = await deposit(
+      program,
+      provider,
+      depositor,
+      cnMint,
+      ptMint,
+      collectionMint,
+      depositAmount
+    );
 
     // --- assertions ---
     console.log("verifying state changes...");
@@ -199,6 +186,7 @@ describe.only("deposit instruction (with hardcoded mints)", () => {
         depositor,
         cnMint,
         ptMint,
+        collectionMint,
         depositAmount
       );
       assert.fail("deposit should have failed due to global lock");
@@ -235,6 +223,7 @@ describe.only("deposit instruction (with hardcoded mints)", () => {
         depositor,
         cnMint,
         ptMint,
+        collectionMint,
         depositAmount
       );
       assert.fail("deposit should have failed due to deposit lock");

@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::Token;
 use anchor_spl::token_2022::Token2022;
 use anchor_spl::token_interface::Mint;
 
@@ -48,7 +47,7 @@ pub struct Initialize<'info> {
 
     // --- programs ---
     pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token>,
+    pub token_program: Program<'info, Token2022>,
 }
 
 impl<'info> Initialize<'info> {
